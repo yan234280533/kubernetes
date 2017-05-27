@@ -479,6 +479,8 @@ type KubeletConfiguration struct {
 	// If enabled, the kubelet will integrate with the kernel memcg notification to determine if memory eviction thresholds are crossed rather than polling.
 	// +optional
 	ExperimentalKernelMemcgNotification bool
+	//The Period of kubelet round to report the pod status to APIServer
+	PlegRelistPeriod int32
 	// Maximum number of pods per core. Cannot exceed MaxPods
 	PodsPerCore int32
 	// enableControllerAttachDetach enables the Attach/Detach controller to

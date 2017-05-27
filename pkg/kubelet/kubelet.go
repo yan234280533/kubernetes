@@ -147,6 +147,12 @@ const (
 	// and/or when there are many container changes in one cycle.
 	plegRelistPeriod = time.Second * 1
 
+	//The minimum peroid of plegRelistPeriod(min:10ms)
+	minPlegRelistPeriod = time.Millisecond*10
+
+	//The maximum peroid of plegRelistPeriod(max:100s)
+	maxPlegRelistPeriod = time.Second*100
+
 	// backOffPeriod is the period to back off when pod syncing results in an
 	// error. It is also used as the base period for the exponential backoff
 	// container restarts and image pulls.
@@ -636,7 +642,14 @@ func NewMainKubelet(kubeCfg *componentconfig.KubeletConfiguration, kubeDeps *Kub
 	// TODO: Factor out "StatsProvider" from Kubelet so we don't have a cyclic dependency
 	klet.resourceAnalyzer = stats.NewResourceAnalyzer(klet, kubeCfg.VolumeStatsAggPeriod.Duration, klet.containerRuntime)
 
-	klet.pleg = pleg.NewGenericPLEG(klet.containerRuntime, plegChannelCapacity, plegRelistPeriod, klet.podCache, clock.RealClock{})
+
+	if ( kubeCfg.PlegRelistPeriod < 10 || kubeCfg.PlegRelistPeriod >100000 ) {
+               kubeCfg.PlegRelistPeriod = plegRelistPeriod
+	} else {
+		kubeCfg.PlegRelistPeriod = kubeCfg.PlegRelistPeriod*time.Millisecond
+	}
+
+	klet.pleg = pleg.NewGenericPLEG(klet.containerRuntime, plegChannelCapacity,kubeCfg.PlegRelistPeriod, klet.podCache, clock.RealClock{})
 	klet.runtimeState = newRuntimeState(maxWaitForContainerRuntime)
 	klet.runtimeState.addHealthCheck("PLEG", klet.pleg.Healthy)
 	klet.updatePodCIDR(kubeCfg.PodCIDR)
